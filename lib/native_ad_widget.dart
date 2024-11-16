@@ -1,13 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'ads_manager.dart';
-import 'ad_configuration.dart';
 
-/// Widget that manages the loading and displaying of a native ad.
+import 'ad_configuration.dart';
+import 'ads_manager.dart';
+
 class NativeAdWidget extends StatefulWidget {
   final String adName;
 
-  /// Creates a [NativeAdWidget] for the given [adName].
   const NativeAdWidget({super.key, required this.adName});
 
   @override
@@ -21,8 +22,10 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
   @override
   void initState() {
     super.initState();
+    _initializeNativeAd();
+  }
 
-    // Get the AdConfiguration from AdManager
+  void _initializeNativeAd() {
     AdConfiguration? config =
         AdManager.instance.getConfiguration(widget.adName);
 
@@ -38,12 +41,16 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
       return;
     }
 
-    // Try to get ad from cache
     _nativeAd = AdManager.instance.getAdFromCache(widget.adName) as NativeAd?;
 
     if (_nativeAd == null) {
-      // Load the ad
-      AdManager.instance.loadAd(config).then((_) => _notifyChange());
+      AdManager.instance.loadAd(config).then((_) {
+        if (mounted) {
+          _notifyChange();
+        }
+      });
+    } else {
+      _notifyChange();
     }
   }
 
@@ -55,26 +62,37 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Try to get ad from cache
     _nativeAd = AdManager.instance.getAdFromCache(widget.adName) as NativeAd?;
     if (_isAdLoaded && _nativeAd != null) {
-      return ConstrainedBox(
-          constraints: const BoxConstraints(
-            minWidth: 320, // minimum recommended width
-            minHeight: 320, // minimum recommended height
-            maxWidth: 400,
-            maxHeight: 400,
-          ),
-          child: AdWidget(ad: _nativeAd!)
+      return Container(
+        width: double.infinity,
+        constraints: BoxConstraints(
+          minHeight: Platform.isIOS ? 180 : 320, // Adjusted for iOS layout
+          maxHeight: Platform.isIOS ? 200 : 400, // Adjusted for iOS layout
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: AdWidget(ad: _nativeAd!),
       );
     } else {
-      return const SizedBox.shrink(); // Return an empty widget or placeholder
+      return const SizedBox.shrink();
     }
   }
 
   void _notifyChange() {
-    setState(() {
-      _isAdLoaded = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isAdLoaded = true;
+      });
+    }
   }
 }

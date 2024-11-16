@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/widgets.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+
 import 'ad_configuration.dart';
 
 class NativeAdLoader {
@@ -18,9 +20,12 @@ class NativeAdLoader {
   }
 
   void _loadNativeAd(Completer<void> completer) {
+    // Get platform-specific factory ID
+    final String factoryId = Platform.isIOS ? 'listTile' : 'adFactoryExample';
+
     NativeAd nativeAd = NativeAd(
       adUnitId: config.id,
-      factoryId: 'adFactoryExample', // Replace with your actual factory ID
+      factoryId: factoryId,
       request: config.adRequest,
       listener: NativeAdListener(
         onAdLoaded: (Ad ad) {
@@ -30,7 +35,8 @@ class NativeAdLoader {
         },
         onAdFailedToLoad: (Ad ad, LoadAdError error) {
           ad.dispose();
-          debugPrint('[NativeAdLoader] Native ad failed to load (${config.name}): $error');
+          debugPrint(
+              '[NativeAdLoader] Native ad failed to load (${config.name}): $error');
           if (retryCount < config.retry) {
             retryCount++;
             debugPrint(
