@@ -31,6 +31,7 @@ class AdManager {
   static const Duration _minimumBackgroundDuration = Duration(seconds: 5);
   String? _appOpenAdName;
   AppLifecycleListener? _lifecycleListener;
+  bool _isShowingFullScreenAd = false;
 
   /// Initializes the [AdManager] with a list of [AdConfiguration].
   ///
@@ -69,20 +70,27 @@ class AdManager {
   }
 
   void _handleAppLifecycleState(AppLifecycleState state) {
-    // Only process if app open ad tracking is enabled
     if (_appOpenAdName == null) return;
 
     debugPrint('[AdManager] Lifecycle state changed to: $state');
 
     switch (state) {
       case AppLifecycleState.paused:
-        _pausedTime = DateTime.now();
-        _showAdWhenAppOpened = true;
-        debugPrint('[AdManager] App paused');
+        // Only set pausedTime if we're not showing a full screen ad
+        if (!_isShowingFullScreenAd) {
+          _pausedTime = DateTime.now();
+          _showAdWhenAppOpened = true;
+          debugPrint('[AdManager] App paused - not showing full screen ad');
+        } else {
+          debugPrint(
+              '[AdManager] App paused - showing full screen ad, skipping app open ad tracking');
+        }
         break;
 
       case AppLifecycleState.resumed:
-        if (_showAdWhenAppOpened && _pausedTime != null) {
+        if (_showAdWhenAppOpened &&
+            _pausedTime != null &&
+            !_isShowingFullScreenAd) {
           final pauseDuration = DateTime.now().difference(_pausedTime!);
           if (pauseDuration >= _minimumBackgroundDuration) {
             debugPrint(
@@ -288,15 +296,18 @@ class AdManager {
       AdConfiguration config) {
     return FullScreenContentCallback(
       onAdShowedFullScreenContent: (ad) {
+        _isShowingFullScreenAd = true;
         debugPrint('[AdManager] Ad showed full screen content: ${config.name}');
         _reloadAdIfNeeded(config);
       },
       onAdDismissedFullScreenContent: (ad) {
+        _isShowingFullScreenAd = false;
         debugPrint(
             '[AdManager] Ad dismissed full screen content: ${config.name}');
         ad.dispose();
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
+        _isShowingFullScreenAd = false;
         debugPrint(
             '[AdManager] Failed to show interstitial ad (${config.name}): $error');
         ad.dispose();
@@ -325,15 +336,18 @@ class AdManager {
       _createFullScreenContentCallbackRewarded(AdConfiguration config) {
     return FullScreenContentCallback(
       onAdShowedFullScreenContent: (ad) {
+        _isShowingFullScreenAd = true;
         debugPrint('[AdManager] Ad showed full screen content: ${config.name}');
         _reloadAdIfNeeded(config);
       },
       onAdDismissedFullScreenContent: (ad) {
+        _isShowingFullScreenAd = false;
         debugPrint(
             '[AdManager] Ad dismissed full screen content: ${config.name}');
         ad.dispose();
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
+        _isShowingFullScreenAd = false;
         debugPrint(
             '[AdManager] Failed to show rewarded ad (${config.name}): $error');
         ad.dispose();
@@ -395,18 +409,20 @@ class AdManager {
           AdConfiguration config) {
     return FullScreenContentCallback(
       onAdShowedFullScreenContent: (ad) {
-        debugPrint(
-            '[AdManager] App Open Ad showed full screen content: ${config.name}');
+        _isShowingFullScreenAd = true;
+        debugPrint('[AdManager] Ad showed full screen content: ${config.name}');
         _reloadAdIfNeeded(config);
       },
       onAdDismissedFullScreenContent: (ad) {
+        _isShowingFullScreenAd = false;
         debugPrint(
-            '[AdManager] App Open Ad dismissed full screen content: ${config.name}');
+            '[AdManager] Ad dismissed full screen content: ${config.name}');
         ad.dispose();
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
+        _isShowingFullScreenAd = false;
         debugPrint(
-            '[AdManager] Failed to show app open ad (${config.name}): $error');
+            '[AdManager] Failed to show rewarded interstitial ad (${config.name}): $error');
         ad.dispose();
         _reloadAdIfNeeded(config);
       },

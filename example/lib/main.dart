@@ -8,7 +8,6 @@ import 'package:infinity_ads_tracking_lib/banner_ad_widget.dart';
 import 'package:infinity_ads_tracking_lib/infinity_ads_tracking_lib.dart';
 import 'package:infinity_ads_tracking_lib/native_ad_widget.dart';
 import 'package:infinity_ads_tracking_lib_example/ad_helper.dart';
-import 'package:infinity_ads_tracking_lib_example/app_lifecycle_reactor.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -67,15 +66,11 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
   final _infinityAdsTrackingLibPlugin = InfinityAdsTrackingLib();
-  late final AppLifecycleReactor _appLifecycleReactor;
 
   @override
   void initState() {
     super.initState();
     initPlatformState();
-    _appLifecycleReactor = AppLifecycleReactor(
-      adManager: AdManager.instance,
-    );
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
