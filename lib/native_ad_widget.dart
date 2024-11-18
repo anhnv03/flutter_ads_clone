@@ -65,7 +65,7 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
     _nativeAd = AdManager.instance.getAdFromCache(widget.adName) as NativeAd?;
     if (_isAdLoaded && _nativeAd != null) {
       return Container(
-        width: double.infinity,
+        width: MediaQuery.of(context).size.width,
         constraints: BoxConstraints(
           minHeight: Platform.isIOS ? 180 : 320, // Adjusted for iOS layout
           maxHeight: Platform.isIOS ? 200 : 400, // Adjusted for iOS layout
